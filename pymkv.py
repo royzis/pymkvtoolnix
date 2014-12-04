@@ -15,6 +15,10 @@ class MkvTrack:
 		# Spec data for an audio track
 		self.audio_freq = 0
 		self.audio_chans = 0
+		self.compare_result = ''
+
+	def get_id(self):
+		return self.id
 
 	def set_id(self, id):
 		self.id = id
@@ -33,6 +37,9 @@ class MkvTrack:
 
 	def set_codec(self, codec):
 		self.codec = codec
+
+	def get_compare_result(self):
+		return self.compare_result
 
 	def __str__(self):
 		spec = ''
@@ -94,6 +101,28 @@ class MkvTrack:
 										if o is not None:
 											self.audio_chans = int(o.group(1))
 
+	def __eq__(self, other):
+		""" Compare two tracks information. Returns True if tracks are equal, False otherwise. Then compare_result
+		property contains what field was different """
+		self.compare_result = 'id'
+		if self.id != other.id:
+			return False
+		self.compare_result = 'type'
+		if self.type != other.type:
+			return False
+		self.compare_result = 'default'
+		if self.default != other.default:
+			return False
+		self.compare_result = 'language'
+		if self.language != other.language:
+			return False
+		self.compare_result = 'codec'
+		if self.codec != other.codec:
+			return False
+		self.compare_result = ''	
+		return True
+
+
 
 def run_mkvinfo(mkvfile):
 	try:
@@ -124,3 +153,26 @@ def parse_mkv_file(mkvfile):
 		if curtrack is not None:
 			tracklist.append(curtrack)
 	return tracklist
+
+def compare_mkv_tracks(tracks1, tracks2):
+	""" Compares list of tracks tracks1 with list of tracks tracks2. Returns an empty string if the tracks are equal or a string
+	explaining the different otherwise """
+	if len(tracks1) != len(tracks2):
+		return "Not same number of tracks"
+	ltracks2 = tracks2	# Local copy of tracks 2 since we'll pop the elements from there
+	tlen = len(tracks2)
+	for t1 in tracks1:
+		t2 = None
+		for i in range(tlen):
+			if t1.get_id() == ltracks2[i].get_id():
+				t2 = ltracks2.pop(i)
+				break
+		if t2 is None:		# Same Id not found
+			return "Track " + str(t1.get_id()) + " not found"
+		if not t1 == t2:
+			return "Different " + t1.get_compare_result() + " in track " + str(t1.get_id())
+	if len(ltracks2) != 0:
+		# We should never get here: tracks2 had more tracks than already checked. This is impossible as far as we
+		# compared the lengthes already
+		return "Still have uncompared tracks"
+	return ''

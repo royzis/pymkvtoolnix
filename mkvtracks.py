@@ -3,7 +3,7 @@
 import sys
 import getopt
 import os
-from pymkv import MkvTrack, parse_mkv_file
+from pymkv import MkvTrack, parse_mkv_file, compare_mkv_tracks
 
 def print_tracks(tracklist):
 	print MkvTrack.header()
@@ -71,6 +71,7 @@ def main(argv):
 
 
 	if work_file != '':
+		# File was specified, eiither print the tracks info or check the consitency with other files in the directory
 		try:
 			ref_tracks = parse_mkv_file(work_file)
 		except Exception, s:
@@ -80,10 +81,22 @@ def main(argv):
 			print_tracks(ref_tracks)
 		else:
 			allfiles = [ f for f in os.listdir(work_dir) if os.path.isfile(os.path.join(work_dir,f)) ]
-			print "Checking consistency for these files"
+			# Checking consistency for these files"
 			for f in allfiles:
+				if not f.lower().endswith('.mkv'):
+					continue					# We check only MKV files
 				f1 = os.path.join(work_dir, f)
-				if f1 != work_file:
-					print f
+				if f1 != work_file:				# Skip the reference file
+					try:
+						t = parse_mkv_file(f1)
+						result = compare_mkv_tracks(ref_tracks, t)
+						if result != '' :
+							print "*DIFFERENT", f1
+							print result
+						else:
+							print "*OK       ", f1
+					except Exception, s:
+						print "*CANTPARSE", f1
+						print s
 
 main(sys.argv)
