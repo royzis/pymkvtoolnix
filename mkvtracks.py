@@ -9,7 +9,7 @@ def print_tracks(tracklist):
 	print MkvTrack.header()
 	print MkvTrack.separator()
 	for t in tracklist:
-		print t
+		print str(t)
 
 def usage():
 	print "TODO usage here"

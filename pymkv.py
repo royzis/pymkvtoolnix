@@ -2,7 +2,7 @@ import subprocess
 import re
 
 class MkvTrack:
-	def __init__(self):
+	def __init__(self, str_encode='utf-8'):
 		self.type = ''
 		self.name = ''
 		self.id = 0
@@ -15,6 +15,7 @@ class MkvTrack:
 		# Spec data for an audio track
 		self.audio_freq = 0
 		self.audio_chans = 0
+		self.str_encode = str_encode
 		self.compare_result = ''
 
 	def get_id(self):
@@ -45,11 +46,19 @@ class MkvTrack:
 		spec = ''
 		if self.type == 'video':
 			if self.video_height != 0 or self.video_width != 0:
-				spec = "%dx%d" % (self.video_width, self.video_height)
+				spec = u"%dx%d" % (self.video_width, self.video_height)
 		elif self.type == 'audio':
 			if self.audio_freq != 0 or self.audio_chans != 0:
-				spec = "%d Hz, %d ch" % (self.audio_freq, self.audio_chans)
-		return "%2d | %-9s | %-40.40s | %-20.20s | %-4.4s | %-3s | %-20.20s" % (self.id, self.type, self.name, self.codec, self.language, self.default, spec)
+				spec = u"%d Hz, %d ch" % (self.audio_freq, self.audio_chans)
+		# Convert string to unicode to manage correct string format widths
+		utype = self.type.decode(self.str_encode, 'replace')
+		uname = self.name.decode(self.str_encode, 'replace')
+		ucodec = self.codec.decode(self.str_encode, 'replace')
+		ulang = self.language.decode(self.str_encode, 'replace')
+		udefault = self.default.decode(self.str_encode, 'replace')
+		s = u"%2d | %-9s | %-40.40s | %-20.20s | %-4.4s | %-3s | %-20.20s" % (self.id, utype, uname, ucodec, ulang, udefault, spec)
+		# Convert the formatted string back
+		return s.encode(self.str_encode, 'replace')
 
 	@staticmethod
 	def header():
