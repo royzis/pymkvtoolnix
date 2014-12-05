@@ -20,7 +20,7 @@ def main(argv):
 		sys.exit(1)
 
 	try:
-		opts, args = getopt.getopt(sys.argv[1:], "hvca:s:", ["help", "version", "check", "audio:", "subtitle:"])
+		opts, args = getopt.getopt(sys.argv[1:], "hvca:s:e:", ["help", "version", "check", "audio=", "subtitle=", "mkv-encoding="])
 	except getopt.GetoptError as err:
 		# print help information and exit:
 		print str(err) # will print something like "option -a not recognized"
@@ -29,6 +29,7 @@ def main(argv):
 	check_consistency = False
 	new_default_audio = None
 	new_default_subtitle = None
+	mkv_encoding = 'utf-8'
 	for o, a in opts:
 		if o in ("-v", "--version"):
 			print "TODO Version 0.0"
@@ -42,6 +43,8 @@ def main(argv):
 			new_default_audio = a
 		elif o in ("-s", "--subtitle"):
 			new_default_subtitle = a
+		elif o in ("-e", "--mkv-encoding"):
+			mkv_encoding = a
 		else:
 			print "Bad option '%s'" % o
 			exit(1)
@@ -73,7 +76,7 @@ def main(argv):
 	if work_file != '':
 		# File was specified, eiither print the tracks info or check the consitency with other files in the directory
 		try:
-			ref_tracks = parse_mkv_file(work_file)
+			ref_tracks = parse_mkv_file(work_file, mkv_encoding)
 		except Exception, s:
 			print "MKV parsing error:", s
 			raise

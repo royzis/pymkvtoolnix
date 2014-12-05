@@ -144,7 +144,7 @@ def run_mkvinfo(mkvfile):
 		l = r.splitlines()
 	return l
 
-def parse_mkv_file(mkvfile):
+def parse_mkv_file(mkvfile, mkv_encoding='utf-8'):
 	l = run_mkvinfo(mkvfile)
 	if len(l) < 3:
 		raise Exception, l[0]
@@ -155,7 +155,7 @@ def parse_mkv_file(mkvfile):
 			if re.search('\\+ A track', s) != None:
 				if curtrack is not None:
 					tracklist.append(curtrack)
-				curtrack = MkvTrack()
+				curtrack = MkvTrack(mkv_encoding)
 			else:
 				if curtrack is not None:
 					curtrack.parse_string(s)
