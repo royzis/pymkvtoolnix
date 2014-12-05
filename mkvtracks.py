@@ -14,6 +14,22 @@ def print_tracks(tracklist):
 def usage():
 	print "TODO usage here"
 
+def set_new_defaults(fname, audio_track, subtitle_track, tracks):
+	if subtitle_track is not None:
+		print "Set default subtitle for", fname
+	if audio_track is not None:
+		print "Set default audio for", fname
+
+def get_all_mkv_files(workdir):
+	allfiles = [ f for f in os.listdir(workdir) if os.path.isfile(os.path.join(workdir,f)) ]
+	result = []
+	for f in allfiles:
+		if not f.lower().endswith('.mkv'):
+			continue					# We check only MKV files
+		f1 = os.path.join(workdir, f)
+		result.append(f1)
+	return result
+
 def main(argv):
 	if len(argv) < 2:
 		usage()
@@ -53,7 +69,7 @@ def main(argv):
 		exit(1)
 
 	if check_consistency and (new_default_audio is not None or new_default_subtitle is not None):
-		print "Consistency checking cant be specified with audio/subtitle defaults change"
+		print "Consistency checking can't be specified with audio/subtitle defaults change"
 		exit(2)
 
 	if os.path.isdir(args[0]):
@@ -80,26 +96,36 @@ def main(argv):
 		except Exception, s:
 			print "MKV parsing error:", s
 			raise
-		if not check_consistency:
-			print_tracks(ref_tracks)
-		else:
-			allfiles = [ f for f in os.listdir(work_dir) if os.path.isfile(os.path.join(work_dir,f)) ]
+			exit(3)
+		if check_consistency:
+			allfiles = get_all_mkv_files(work_dir)
 			# Checking consistency for these files"
 			for f in allfiles:
-				if not f.lower().endswith('.mkv'):
-					continue					# We check only MKV files
-				f1 = os.path.join(work_dir, f)
-				if f1 != work_file:				# Skip the reference file
+				if f != work_file:				# Skip the reference file
 					try:
-						t = parse_mkv_file(f1)
+						t = parse_mkv_file(f)
 						result = compare_mkv_tracks(ref_tracks, t)
 						if result != '' :
-							print "*DIFFERENT", f1
+							print "*DIFFERENT", f
 							print result
 						else:
-							print "*OK       ", f1
+							print "*OK       ", f
 					except Exception, s:
-						print "*CANTPARSE", f1
+						print "*CANTPARSE", f
 						print s
+		elif new_default_subtitle is None and new_default_audio is None:
+			print_tracks(ref_tracks)
+		else:
+			set_new_defaults(work_file, new_default_audio, new_default_subtitle, ref_tracks)
+	else:
+		# Working directoy specified
+		allfiles = get_all_mkv_files(work_dir)
+		for f in allfiles:
+			try:
+				tracks = parse_mkv_file(f, mkv_encoding)
+			except Exception, s:
+				print "MKV parsing error:", s
+				exit(3)
+			set_new_defaults(f, new_default_audio, new_default_subtitle, tracks)
 
 main(sys.argv)
