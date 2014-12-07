@@ -3,7 +3,7 @@
 import sys
 import getopt
 import os
-from pymkv import MkvTrack, parse_mkv_file, compare_mkv_tracks
+from pymkv import MkvTrack, parse_mkv_file, compare_mkv_tracks, run_mkvpropedit
 
 def print_tracks(tracklist):
 	print MkvTrack.header()
@@ -14,11 +14,59 @@ def print_tracks(tracklist):
 def usage():
 	print "TODO usage here"
 
+def get_absolute_track(track_name, track_type, tracks):
+	if track_name.startswith(':'):
+		# Relative number or name
+		if track_name[1:].isdigit():
+			# Relative number
+			track_found = 0
+			for t in tracks:
+				if t.get_type() == track_type:
+					track_found += 1
+					if track_found == int(track_name[1:]):
+						return t.get_id()
+			return -1
+		else:
+			# Track name
+			for t in tracks:
+				if t.get_name() == track_name[1:]:
+					return t.get_id()
+			return -1
+	else:
+		# Track number or language
+		if track_name.isdigit():
+			# Track number
+			i = int(track_name)
+			if tracks[i].get_type() == track_type:
+				return tracks[i].get_id()
+			else:
+				return -1
+		else:
+			# Language
+			for t in tracks:
+				if t.get_type() == track_type:
+					if t.get_language() == track_name:
+						return t.get_id()
+			return -1
+
+def get_other_tracks(tracks, track_type, default_track):
+	result = []
+	for t in tracks:
+		if t.get_type() == track_type and t.get_id() != default_track:
+			result.append(t.get_id())
+	return result
+
+
+
 def set_new_defaults(fname, audio_track, subtitle_track, tracks):
 	if subtitle_track is not None:
-		print "Set default subtitle for", fname
+		tid = get_absolute_track(subtitle_track, 'subtitles', tracks)
+		print "Set default subtitle track", tid, "for", fname
+		run_mkvpropedit(fname, tid, get_other_tracks(tracks, 'subtitles', tid))
 	if audio_track is not None:
-		print "Set default audio for", fname
+		tid = get_absolute_track(audio_track, 'audio', tracks)
+		print "Set default audio track", tid, "for", fname
+		run_mkvpropedit(fname, tid, get_other_tracks(tracks, 'audio', tid))
 
 def get_all_mkv_files(workdir):
 	allfiles = [ f for f in os.listdir(workdir) if os.path.isfile(os.path.join(workdir,f)) ]

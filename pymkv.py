@@ -27,14 +27,23 @@ class MkvTrack:
 	def set_type(self, type):
 		self.type = type
 
+	def get_type(self):
+		return self.type
+
 	def set_name(self, name):
 		self.name = name
+
+	def get_name(self):
+		return self.name
 
 	def set_default(self, deflt):
 		self.default = deflt
 
 	def set_language(self, lang):
 		self.language = lang
+
+	def get_language(self):
+		return self.language
 
 	def set_codec(self, codec):
 		self.codec = codec
@@ -143,6 +152,13 @@ def run_mkvinfo(mkvfile):
 	else:
 		l = r.splitlines()
 	return l
+
+def run_mkvpropedit(mkvfile, default_track, non_default_tracks):
+	cmd = ['mkvpropedit', mkvfile, '--edit', 'track', str(default_track), '--set', 'flag-default=1']
+	for t in non_default_tracks:
+		cmd+=['--edit', 'track', str(t), '--set', 'flag-default=0']
+	print "Executing", cmd
+	#res = subprocess.call(cmd)
 
 def parse_mkv_file(mkvfile, mkv_encoding='utf-8'):
 	l = run_mkvinfo(mkvfile)
